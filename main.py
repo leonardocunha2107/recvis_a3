@@ -63,7 +63,7 @@ else:
     print('Using CPU')
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-logger=Jimmy('Charles',['loss','acc'])
+logger=Jimmy('Charles',['loss','acc'],'logs')
 def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
