@@ -6,6 +6,13 @@ import torch.optim as optim
 from torchvision import datasets
 from torch.autograd import Variable
 from tqdm import tqdm
+import torch
+import numpy as np
+import json
+from IPython import display
+import matplotlib.pyplot as plt
+from livelossplot import PlotLosses
+SEP='-'*40
 
 # Training settings
 parser = argparse.ArgumentParser(description='RecVis A3 training script')
@@ -56,7 +63,7 @@ else:
     print('Using CPU')
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-
+logger=PlotLosses(groups={'acc':['train_acc','val_acc'],'loss':['train_loss','val_loss']})
 def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -68,10 +75,8 @@ def train(epoch):
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.data.item()))
+        logger.update({'train_loss':loss})
+        logger.send()
 
 def validation():
     model.eval()
@@ -87,12 +92,14 @@ def validation():
         # get the index of the max log-probability
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
+        logger.update({'val_loss':validation_loss})
 
     validation_loss /= len(val_loader.dataset)
     print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
         validation_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)))
-
+    logger.update({'val_acc':100. * correct / len(val_loader.dataset)})
+    logger.send()
 
 for epoch in range(1, args.epochs + 1):
     train(epoch)
@@ -100,3 +107,4 @@ for epoch in range(1, args.epochs + 1):
     model_file = args.experiment + '/model_' + str(epoch) + '.pth'
     torch.save(model.state_dict(), model_file)
     print('Saved model to ' + model_file + '. You can run `python evaluate.py --model ' + model_file + '` to generate the Kaggle formatted csv file\n')
+logger.close()
