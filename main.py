@@ -11,7 +11,7 @@ import numpy as np
 import json
 from IPython import display
 import matplotlib.pyplot as plt
-from livelossplot import PlotLosses
+from logger import Jimmy
 SEP='-'*40
 
 # Training settings
@@ -63,7 +63,7 @@ else:
     print('Using CPU')
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-logger=PlotLosses(groups={'acc':['train_acc','val_acc'],'loss':['train_loss','val_loss']})
+logger=Jimmy('Charles',['loss','acc'])
 def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -76,7 +76,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
         logger.update({'train_loss':loss})
-        logger.send()
+
 
 def validation():
     model.eval()
@@ -99,12 +99,12 @@ def validation():
         validation_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)))
     logger.update({'val_acc':100. * correct / len(val_loader.dataset)})
-    logger.send()
 
 for epoch in range(1, args.epochs + 1):
     train(epoch)
     validation()
+    logger.close_epoch()
     model_file = args.experiment + '/model_' + str(epoch) + '.pth'
-    torch.save(model.state_dict(), model_file)
+    #torch.save(model.state_dict(), model_file)
     print('Saved model to ' + model_file + '. You can run `python evaluate.py --model ' + model_file + '` to generate the Kaggle formatted csv file\n')
 logger.close()
