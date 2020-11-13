@@ -11,10 +11,9 @@ import numpy as np
 import json
 from IPython import display
 import matplotlib.pyplot as plt
-from logger import Jimmy
 SEP='-'*40
 
-def train(model,train_loader,oprimizer):
+def train(model,train_loader,optimizer,use_cuda):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         if use_cuda:
@@ -32,7 +31,7 @@ def train(model,train_loader,oprimizer):
             logger.update({'train_acc': pred.eq(target.data.view_as(pred)).cpu().sum()})
 
 
-def validation(model,logger,val_loader):
+def validation(model,logger,val_loader,use_cuda):
     model.eval()
     validation_loss = 0
     correct = 0
@@ -55,7 +54,7 @@ def validation(model,logger,val_loader):
         100. * correct / len(val_loader.dataset)))
     logger.update({'val_acc':100. * correct / len(val_loader.dataset)})
     
-if __name__='__main__':
+if __name__=='__main__':
         # Training settings
 
     args = parser.parse_args()
