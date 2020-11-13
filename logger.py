@@ -2,9 +2,7 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import os.path as path
-import shutil
-import numpy as np
-import json
+
 
 class Jimmy:
     def __init__(self,experiment_name,metric_keys,logdir='.',verbose=5):
