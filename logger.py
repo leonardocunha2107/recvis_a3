@@ -2,7 +2,7 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import os.path as path
-
+import json
 
 class Jimmy:
     def __init__(self,experiment_name,metric_keys,model,logdir='.',verbose=5,**kwargs):
@@ -10,13 +10,14 @@ class Jimmy:
         self.verbose=verbose
         self.model=model
         self.save_every=kwargs.get('save_every',10)
+        self.main_metric=kwargs.get('main_metric',None)
         self.log={k:[] for k in self.metric_keys}
         self.last_epoch={k:0 for k in self.metric_keys}
         self.t={k:0 for k in self.metric_keys}
         self.model_t=0
         self.epoch=1
         self.logdir=logdir
- 
+        self.best_metric_val=-1 ##TODO
         
         self.tag=experiment_name
         self.summ_path=path.join(logdir,self.tag)  
@@ -42,12 +43,18 @@ class Jimmy:
             self.last_epoch[k]=self.t[k]
             if pri:  print(f'{k} average: {sum(aux)/len(aux)}')
         if pri: print("\n")
+        if self.main_metric and self.log[self.main_metric][-1]>self.best_metric_val:
+            torch.save(self.model.state_dict(), path.join(self.summ_path,f'best_mdl.pt'))
+            self.best_metric_val=self.log[self.main_metric][-1]
         if self.save_every and self.epoch%self.save_every==0:
+        
             self.flush()
         self.epoch+=1
     def flush(self):
-        torch.save({'state_dict':self.model.state_dict(),
-                    'log':self.log}, path.join(self.summ_path,f'mdl{self.epoch}.pt'))
+        torch.save(self.model.state_dict(), path.join(self.summ_path,f'mdl{self.epoch}.pt'))
+        with open(path.join(self.summ_path,'log.json'),'w+') as fd:
+            json.dump(self.log,fd)
+        
     def close(self):
         self.sw.close()
         self.flush
