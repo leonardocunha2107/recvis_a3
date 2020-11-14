@@ -5,10 +5,11 @@ import os.path as path
 
 
 class Jimmy:
-    def __init__(self,experiment_name,metric_keys,logdir='.',verbose=5):
+    def __init__(self,experiment_name,metric_keys,model,logdir='.',verbose=5,**kwargs):
         self.metric_keys=set(['train_'+k for k in metric_keys]+['val_'+k for k in metric_keys])
         self.verbose=verbose
-
+        self.model=model
+        self.save_every=kwargs.get('save_every',10)
         self.log={k:[] for k in self.metric_keys}
         self.last_epoch={k:0 for k in self.metric_keys}
         self.t={k:0 for k in self.metric_keys}
@@ -41,9 +42,14 @@ class Jimmy:
             self.last_epoch[k]=self.t[k]
             if pri:  print(f'{k} average: {sum(aux)/len(aux)}')
         if pri: print("\n")
-    def close(self,model):
+        if self.save_every and self.epoch%self.save_every==0:
+            self.flush()
+        self.epoch+=1
+    def flush(self):
+        torch.save({'state_dict':self.model.state_dict(),
+                    'log':self.log}, path.join(self.summ_path,f'mdl{self.epoch}.pt'))
+    def close(self):
         self.sw.close()
-        torch.save({'state_dict':model.state_dict(),
-                    'log':self.log}, path.join(self.summ_path,'mdl.pt'))
+        self.flush
      
             
