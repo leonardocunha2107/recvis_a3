@@ -13,7 +13,7 @@ from IPython import display
 import matplotlib.pyplot as plt
 SEP='-'*40
 
-def train(model,train_loader,optimizer,use_cuda):
+def train(model,logger,train_loader,optimizer,use_cuda):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         if use_cuda:
@@ -28,7 +28,7 @@ def train(model,train_loader,optimizer,use_cuda):
 
         with torch.no_grad():
             pred = output.data.max(1, keepdim=True)[1]
-            logger.update({'train_acc': pred.eq(target.data.view_as(pred)).cpu().sum()})
+            logger.update({'train_acc': pred.eq(target.data.view_as(pred)).cpu().sum()/len(data)})
 
 
 def validation(model,logger,val_loader,use_cuda):
